@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hello World</title>
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    
+    <!-- Don't use this in production: -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <style>
+        .tree-element {
+            margin: 0;
+            position: relative;
+        }
+        .toggler {
+            position: absolute;
+            top: 10px;
+            left: 0px;
+            width: 0;
+            height: 0;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-left: 5px solid gray;
+            cursor: pointer;
+        }
+        .toggler.closed {
+            transform: rotate(90deg);
+        }
+
+        /* 隐藏节点内容 */
+        .collapsed {
+            display: none;
+        }
+    </style>
+  </head>
+  <body>
+    <div>----------------------react 树组件 --------------------------</div>
+    <div id="root"></div>
+    <div>----------------------vue 树组件 --------------------------</div>
+    <div id="app">
+        <tree :data="data" :toggled = "true" :isChildElement="false"/>
+    </div>
+    <script type="text/babel">
+
+        // ------------------------------ react 实现 ----------------------------------
+        const {useState, useEffect, useReducer, useRef, memo, useContext, createContext } = React
+        function Parent () {
+            let data = {
+                value: '0-0',
+                child: [
+                    {
+                        value: '1-1',
+                        child: [
+                            {value: '2-1'},
+                            {value: '2-2'},
+                            {value: '2-3'},
+                        ]
+                    },
+                    {
+                        value: '1-2',
+                        child: [
+                            {value: '2-1'},
+                            {value: '2-2'},
+                            {value: '2-3'},
+                        ]
+                    }
+                ]
+            }
+            return (
+                <TreeView data={data} name="data" />
+            );
+        }
+
+        function TreeView({
+            data,
+            toggled = true, 
+            isChildElement = false, 
+            }) {
+            const [isToggled, setIsToggled] = React.useState(toggled);
+            return (
+                <div style={{ marginLeft: isChildElement ? 16 : 4 + "px" }}
+                    className={toggled || !isChildElement ? "tree-element" : "collapsed"}
+                >
+                    {
+                        data.child &&  data.child.length > 0 ?
+                        <span
+                        className={
+                        isToggled ? "toggler closed" : "toggler"
+                        }
+                        onClick={() => setIsToggled(!isToggled)}
+                    /> : null
+                    }
+                    {data.value ? <strong>&nbsp;&nbsp;&nbsp;&nbsp;{data.value} </strong> : null}
+                    {data.child && data.child.map((v, i) =>
+                        <TreeView
+                            data={v}
+                            key={i}
+                            isChildElement
+                            toggled={isToggled}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+    ReactDOM.render(
+        <Parent />,
+        document.getElementById('root')
+    );
+    
+    // ------------------------------ vue 实现 ----------------------------------
+    let tree = Vue.component('tree', {
+        props: ['data', 'isChildElement', 'toggled'],
+        data () {
+            return {
+                isToggled: this.toggled
+            }
+        },
+        methods: {
+            toggle () {
+                this.isToggled = !this.isToggled
+            }
+        },
+        template: `
+        <div class="tree-element" :style="{marginLeft: isChildElement ? '16px' : '4px'}" v-if="toggled">
+            <span @click="toggle" class="toggler" :class="{closed: isToggled}" v-if="data.child && data.child.length > 0"></span>
+            <strong>&nbsp;&nbsp;&nbsp;&nbsp;{{data.value}} </strong>
+            <div v-if="data.child">
+                <tree v-for="item in data.child" :data="item" :key="item.value" :toggled="isToggled" :isChildElement="true"></tree>
+            </div>
+        </div>`
+    })
+
+    var app = new Vue({
+        el: '#app',
+        data: {
+            num: 0,
+            data: {
+                value: '0-0',
+                child: [
+                    {
+                        value: '1-1',
+                        child: [
+                            {value: '2-1'},
+                            {value: '2-2'},
+                            {value: '2-3'},
+                        ]
+                    },
+                    {
+                        value: '1-2',
+                        child: [
+                            {value: '2-1'},
+                            {value: '2-2'},
+                            {value: '2-3'},
+                        ]
+                    }
+                ]
+            }
+        },
+        components: {
+            tree
+        }
+    })
+
+    </script>
+  </body>
+</html>
